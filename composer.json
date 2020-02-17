@@ -5,7 +5,7 @@
   "license": "GPL-2.0+",
   "autoload": {
     "classmap": [
-      "vendor/netzstrategen/drupal-attributes/src"
+      "src"
     ]
   }
 }
