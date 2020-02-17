@@ -1,0 +1,11 @@
+{
+  "name": "netzstrategen/drupal-attributes",
+  "type": "drupal-module",
+  "description": "Modifications to core Drupal files for Fractal.",
+  "license": "GPL-2.0+",
+  "autoload": {
+    "classmap": [
+      "vendor/netzstrategen/drupal-attributes/src"
+    ]
+  }
+}
