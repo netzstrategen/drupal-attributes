@@ -298,11 +298,7 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
       return $this;
     }
     $merged_array = array_merge_recursive($this->toArray(), $attribute instanceof Attribute ? $attribute->toArray() : $attribute);
-    foreach ($merged_array as $attribute => $value) {
-      $this->setAttribute($attribute, $value);
-    }
-
-    return $this;
+    return new static($merged_array);
   }
 
   /**
