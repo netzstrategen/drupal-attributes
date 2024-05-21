@@ -343,7 +343,7 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   /**
    * {@inheritdoc}
    */
-  public function getIterator() {
+  public function getIterator(): \Traversable {
     return new \ArrayIterator($this->storage);
   }
 
@@ -360,7 +360,7 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
    * @return string
    *   The safe string content.
    */
-  public function jsonSerialize() {
+  public function jsonSerialize(): mixed {
     return (string) $this;
   }
 
