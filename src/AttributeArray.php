@@ -35,14 +35,14 @@ class AttributeArray extends AttributeValueBase implements \ArrayAccess, \Iterat
   /**
    * {@inheritdoc}
    */
-  public function offsetGet($offset) {
+  public function offsetGet(mixed $offset): mixed {
     return $this->value[$offset];
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetSet($offset, $value) {
+  public function offsetSet(mixed $offset, mixed $value): void {
     if (isset($offset)) {
       $this->value[$offset] = $value;
     }
@@ -54,14 +54,14 @@ class AttributeArray extends AttributeValueBase implements \ArrayAccess, \Iterat
   /**
    * {@inheritdoc}
    */
-  public function offsetUnset($offset) {
+  public function offsetUnset(mixed $offset): void {
     unset($this->value[$offset]);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetExists($offset) {
+  public function offsetExists(mixed $offset): bool {
     return isset($this->value[$offset]);
   }
 
@@ -77,7 +77,7 @@ class AttributeArray extends AttributeValueBase implements \ArrayAccess, \Iterat
   /**
    * {@inheritdoc}
    */
-  public function getIterator() {
+  public function getIterator(): \Traversable {
     return new \ArrayIterator($this->value);
   }
 
@@ -92,7 +92,7 @@ class AttributeArray extends AttributeValueBase implements \ArrayAccess, \Iterat
    * @return array
    *   The old array value.
    */
-  public function exchangeArray($input) {
+  public function exchangeArray(array $input): array {
     $old = $this->value;
     $this->value = $input;
     return $old;

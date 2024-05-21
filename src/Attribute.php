@@ -86,17 +86,17 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   /**
    * {@inheritdoc}
    */
-  public function offsetGet($name) {
-    if (isset($this->storage[$name])) {
-      return $this->storage[$name];
+  public function offsetGet(mixed $offset): mixed {
+    if (isset($this->storage[$offset])) {
+      return $this->storage[$offset];
     }
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetSet($name, $value) {
-    $this->storage[$name] = $this->createAttributeValue($name, $value);
+  public function offsetSet(mixed $offset, mixed $value): void {
+    $this->storage[$offset] = $this->createAttributeValue($offset, $value);
   }
 
   /**
@@ -110,7 +110,7 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
    * @return \Drupal\Core\Template\AttributeValueBase
    *   An AttributeValueBase representation of the attribute's value.
    */
-  protected function createAttributeValue($name, $value) {
+  protected function createAttributeValue(string $name, mixed $value): AttributeValueBase {
     // If the value is already an AttributeValueBase object,
     // return a new instance of the same class, but with the new name.
     if ($value instanceof AttributeValueBase) {
@@ -148,15 +148,15 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   /**
    * {@inheritdoc}
    */
-  public function offsetUnset($name) {
-    unset($this->storage[$name]);
+  public function offsetUnset(mixed $offset): void {
+    unset($this->storage[$offset]);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetExists($name) {
-    return isset($this->storage[$name]);
+  public function offsetExists(mixed $offset): bool {
+    return isset($this->storage[$offset]);
   }
 
   /**
