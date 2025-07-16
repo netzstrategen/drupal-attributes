@@ -11,8 +11,8 @@ use Drupal\Component\Render\MarkupInterface;
  * To use, optionally pass in an associative array of defined attributes, or
  * add attributes using array syntax. For example:
  * @code
- *  $attributes = new Attribute(array('id' => 'socks'));
- *  $attributes['class'] = array('black-cat', 'white-cat');
+ *  $attributes = new Attribute(['id' => 'socks']);
+ *  $attributes['class'] = ['black-cat', 'white-cat'];
  *  $attributes['class'][] = 'black-white-cat';
  *  echo '<cat' . $attributes . '>';
  *  // Produces <cat id="socks" class="black-cat white-cat black-white-cat">
@@ -20,8 +20,8 @@ use Drupal\Component\Render\MarkupInterface;
  *
  * $attributes always prints out all the attributes. For example:
  * @code
- *  $attributes = new Attribute(array('id' => 'socks'));
- *  $attributes['class'] = array('black-cat', 'white-cat');
+ *  $attributes = new Attribute(['id' => 'socks']);
+ *  $attributes['class'] = ['black-cat', 'white-cat'];
  *  $attributes['class'][] = 'black-white-cat';
  *  echo '<cat class="cat ' . $attributes['class'] . '"' . $attributes . '>';
  *  // Produces <cat class="cat black-cat white-cat black-white-cat" id="socks" class="cat black-cat white-cat black-white-cat">
@@ -31,19 +31,22 @@ use Drupal\Component\Render\MarkupInterface;
  * template, use the "without" filter to prevent attributes that have already
  * been printed from being printed again. For example:
  * @code
- *  <cat class="{{ attributes.class }} my-custom-class"{{ attributes|without('class') }}>
- *  {# Produces <cat class="cat black-cat white-cat black-white-cat my-custom-class" id="socks"> #}
+ * <cat class="{{ attributes.class }} my-custom-class"{{ attributes|without('class') }}>
+ * @endcode
+ * Produces:
+ * @code
+ * <cat class="cat black-cat white-cat black-white-cat my-custom-class" id="socks">
  * @endcode
  *
  * The attribute keys and values are automatically escaped for output with
  * Html::escape(). No protocol filtering is applied, so when using user-entered
- * input as a value for an attribute that expects an URI (href, src, ...),
+ * input as a value for an attribute that expects a URI (href, src, ...),
  * UrlHelper::stripDangerousProtocols() should be used to ensure dangerous
  * protocols (such as 'javascript:') are removed. For example:
  * @code
  *  $path = 'javascript:alert("xss");';
  *  $path = UrlHelper::stripDangerousProtocols($path);
- *  $attributes = new Attribute(array('href' => $path));
+ *  $attributes = new Attribute(['href' => $path]);
  *  echo '<a' . $attributes . '>';
  *  // Produces <a href="alert(&quot;xss&quot;);">
  * @endcode
@@ -86,17 +89,25 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   /**
    * {@inheritdoc}
    */
-  public function offsetGet(mixed $offset): mixed {
-    if (isset($this->storage[$offset])) {
-      return $this->storage[$offset];
+  public function offsetGet($name): mixed {
+    if (isset($this->storage[$name])) {
+      return $this->storage[$name];
     }
+    // The 'class' array key is expected to be itself an array, and therefore
+    // can be accessed using array append syntax before it has been initialized.
+    if ($name === 'class') {
+      // Initialize the class attribute as an empty array if not set.
+      $this->offsetSet('class', []);
+      return $this->storage['class'];
+    }
+    return NULL;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetSet(mixed $offset, mixed $value): void {
-    $this->storage[$offset] = $this->createAttributeValue($offset, $value);
+  public function offsetSet($name, $value): void {
+    $this->storage[$name] = $this->createAttributeValue($name, $value);
   }
 
   /**
@@ -148,35 +159,35 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   /**
    * {@inheritdoc}
    */
-  public function offsetUnset(mixed $offset): void {
-    unset($this->storage[$offset]);
+  public function offsetUnset($name): void {
+    unset($this->storage[$name]);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function offsetExists(mixed $offset): bool {
-    return isset($this->storage[$offset]);
+  public function offsetExists($name): bool {
+    return isset($this->storage[$name]);
   }
 
   /**
    * Adds classes or merges them on to array of existing CSS classes.
    *
-   * @param string|array ...
+   * @param string|array ...$args
    *   CSS classes to add to the class attribute array.
    *
    * @return $this
    */
-  public function addClass() {
-    $args = func_get_args();
+  public function addClass(...$args) {
     if ($args) {
       $classes = [];
       foreach ($args as $arg) {
         // Merge the values passed in from the classes array.
         // The argument is cast to an array to support comma separated single
         // values or one or more array arguments.
-        $classes = array_merge($classes, (array) $arg);
+        $classes[] = (array) $arg;
       }
+      $classes = array_merge(...$classes);
 
       // Merge if there are values, just add them otherwise.
       if (isset($this->storage['class']) && $this->storage['class'] instanceof AttributeArray) {
@@ -209,15 +220,27 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   }
 
   /**
+   * Checks if the storage has an attribute with the given name.
+   *
+   * @param string $name
+   *   The name of the attribute to check for.
+   *
+   * @return bool
+   *   Returns TRUE if the attribute exists, or FALSE otherwise.
+   */
+  public function hasAttribute($name) {
+    return array_key_exists($name, $this->storage);
+  }
+
+  /**
    * Removes an attribute from an Attribute object.
    *
-   * @param string|array ...
+   * @param string|array ...$args
    *   Attributes to remove from the attribute array.
    *
    * @return $this
    */
-  public function removeAttribute() {
-    $args = func_get_args();
+  public function removeAttribute(...$args) {
     foreach ($args as $arg) {
       // Support arrays or multiple arguments.
       if (is_array($arg)) {
@@ -236,22 +259,22 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   /**
    * Removes argument values from array of existing CSS classes.
    *
-   * @param string|array ...
+   * @param string|array ...$args
    *   CSS classes to remove from the class attribute array.
    *
    * @return $this
    */
-  public function removeClass() {
+  public function removeClass(...$args) {
     // With no class attribute, there is no need to remove.
     if (isset($this->storage['class']) && $this->storage['class'] instanceof AttributeArray) {
-      $args = func_get_args();
       $classes = [];
       foreach ($args as $arg) {
         // Merge the values passed in from the classes array.
         // The argument is cast to an array to support comma separated single
         // values or one or more array arguments.
-        $classes = array_merge($classes, (array) $arg);
+        $classes[] = (array) $arg;
       }
+      $classes = array_merge(...$classes);
 
       // Remove the values passed in from the value array. Use array_values() to
       // ensure that the array index remains sequential.
@@ -259,6 +282,20 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
       $this->storage['class']->exchangeArray($classes);
     }
     return $this;
+  }
+
+  /**
+   * Gets the class attribute value if set.
+   *
+   * This method is implemented to take precedence over hasClass() for Twig 2.0.
+   *
+   * @return \Drupal\Core\Template\AttributeValueBase
+   *   The class attribute value if set.
+   *
+   * @see twig_get_attribute()
+   */
+  public function getClass() {
+    return $this->offsetGet('class');
   }
 
   /**
@@ -307,7 +344,7 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   public function __toString() {
     $return = '';
     /** @var \Drupal\Core\Template\AttributeValueBase $value */
-    foreach ($this->storage as $name => $value) {
+    foreach ($this->storage as $value) {
       $rendered = $value->render();
       if ($rendered) {
         $return .= ' ' . $rendered;
@@ -343,7 +380,7 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
   /**
    * {@inheritdoc}
    */
-  public function getIterator(): \Traversable {
+  public function getIterator(): \ArrayIterator {
     return new \ArrayIterator($this->storage);
   }
 
@@ -360,7 +397,7 @@ class Attribute implements \ArrayAccess, \IteratorAggregate, MarkupInterface {
    * @return string
    *   The safe string content.
    */
-  public function jsonSerialize(): mixed {
+  public function jsonSerialize(): string {
     return (string) $this;
   }
 
